@@ -27,6 +27,7 @@ class pacemaker::corosync(
   $settle_timeout   = '3600',
   $settle_tries     = '360',
   $settle_try_sleep = '10',
+  $transport        = undef,
 ) inherits pacemaker {
   include ::pacemaker::params
 
@@ -76,6 +77,12 @@ class pacemaker::corosync(
       require => Class["::pacemaker::install"],
     }
     ->
+    if $transport == 'udpu' {
+      exec { 'setting transport in cman':
+                  command => '/usr/sbin/ccs -f /etc/cluster/cluster.conf --setcman transport="udpu"',
+        }
+      }
+    ~>
     exec {"Start Cluster $cluster_name":
       unless => "/usr/sbin/pcs status >/dev/null 2>&1",
       command => "/usr/sbin/pcs cluster start --all",

@@ -71,17 +71,19 @@ class pacemaker::corosync(
 
   if $setup_cluster {
 
-    # This will be used when creating the cluster with udpu transport
+    # This workaround will be used when creating the cluster with udpu transport
+    # With cman or in this version --transport udpu does NOT seem to work
     if $transport == 'udpu' {
       $additionalCommand ='&& /usr/sbin/ccs -f /etc/cluster/cluster.conf --setcman transport="udpu"'
     } else {
       $additionalCommand = ''  
     }
       
-
+    # The cluster is not yet up! So, will give the --local flag to configure
+    # Otherwise it fails
     exec {"Create Cluster $cluster_name":
       creates => "/etc/cluster/cluster.conf",
-      command => "/usr/sbin/pcs cluster setup --name $cluster_name $cluster_members ${additionalCommand}",
+      command => "/usr/sbin/pcs cluster setup --local --name $cluster_name $cluster_members ${additionalCommand}",
       unless => "/usr/bin/test -f /etc/corosync/corosync.conf",
       require => Class["::pacemaker::install"],
     }
